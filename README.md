@@ -1,6 +1,5 @@
-# 💳 POS Agent Financial Tracker System
-
-### Financial Tracking and Tax-Ready Reporting App for POS Agents and Small Businesses
+# 💳 POS Ledger NG
+### Intelligent Financial Tracking System for POS Agents & Small Businesses
 
 ![Python](https://img.shields.io/badge/Python-100%25-blue)
 ![Database](https://img.shields.io/badge/Database-SQLite-lightgrey)
