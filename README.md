@@ -59,8 +59,9 @@ Flow:
 
 ---
 
-## 🧩 Professional Flowchart
-![POS Agent Tracker Flowchart](file_000000003b3471f496f25e8dc945dbae)
+## 🧩 System Architecture
+
+![POS Agent Tracker Architecture](ystem_architecture.png)
 
 ---
 
