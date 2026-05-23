@@ -155,15 +155,13 @@ CSV Report Export
 ```
 
 ---
-
 ## 🏗️ System Architecture
 
 The diagram below illustrates the architecture and operational flow of the POS Agent Financial Tracker System.
 
 <p align="center">
-  <img src="assets/system%20architecture%20png/system_architecture.png" width="850"/>
+  <img src="system_architecture.png" width="850"/>
 </p>
-
 ### Architecture Components
 
 ### 1. User Interface Layer
