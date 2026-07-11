@@ -1,14 +1,12 @@
 # Frequently Asked Questions (FAQ)
 
-# POS Ledger NG
-
 ## What is POS Ledger NG?
 
-POS Ledger NG is an offline-first financial management platform that helps POS agents, mobile money operators, and small businesses record transactions, monitor cash flow, calculate service charges, and generate financial reports.
+POS Ledger NG is a financial management platform designed for POS agents, mobile money operators, and small businesses. It helps users digitally record transactions, monitor cash flow, calculate service charges, and generate business reports.
 
 ---
 
-## Who is POS Ledger NG designed for?
+## Who is the product designed for?
 
 The platform is designed for:
 
@@ -18,173 +16,114 @@ The platform is designed for:
 - Retail Shops
 - Cooperative Societies
 - Agency Banking Networks
-- Microfinance Institutions
+- Business Centers
 
 ---
 
 ## What problem does POS Ledger NG solve?
 
-Many small businesses still rely on manual bookkeeping, which can lead to:
+Many small businesses still rely on notebooks and manual calculations to manage daily transactions. This often leads to:
 
-- Lost records
-- Calculation errors
+- Missing records
+- Incorrect calculations
 - Poor cash management
-- Difficulty tracking profits
-- Limited financial visibility
-- Challenges preparing tax records
+- Difficulty preparing reports
+- Limited business insights
 
-POS Ledger NG digitizes these processes to improve accuracy and efficiency.
-
----
-
-## What features are currently available?
-
-The current MVP includes:
-
-- Transaction recording
-- Deposit and withdrawal tracking
-- Automatic service charge calculation
-- Daily financial summaries
-- Monthly financial summaries
-- CSV report export
-- Local SQLite database storage
+POS Ledger NG provides a digital solution to improve financial organization and accountability.
 
 ---
 
-## Does POS Ledger NG work offline?
+## Is POS Ledger NG a banking application?
+
+No.
+
+POS Ledger NG is a financial operations and bookkeeping platform. It does not hold customer funds or process bank transfers.
+
+---
+
+## Does the application work offline?
 
 Yes.
 
-The current version is an offline-first desktop application. Business data is stored locally using SQLite.
+The current Minimum Viable Product (MVP) is an offline desktop application that stores records locally using SQLite.
 
 ---
 
-## Is my data secure?
-
-The MVP stores data locally on the user's device.
-
-Future versions are planned to include:
-
-- PIN authentication
-- Database encryption
-- Secure cloud backup
-- User account management
-- Audit logging
-
----
-
-## Which technologies are used?
-
-- Python
-- Tkinter
-- SQLite
-- CSV Reporting
-- Git
-- GitHub
-
----
-
-## What reports can be generated?
+## What reports can users generate?
 
 Users can generate:
 
 - Daily Reports
 - Monthly Reports
-- CSV Exports
-- Financial Summaries
+- Profit Summaries
+- Transaction Summaries
+- CSV Export Reports
+
+Future versions will support PDF reporting and cloud synchronization.
 
 ---
 
-## Is there a mobile version?
+## What technologies are used?
 
-Not yet.
-
-An Android application is part of the product roadmap.
+- Python
+- SQLite
+- Tkinter
+- CSV Reporting
+- Git & GitHub
 
 ---
 
-## Will cloud synchronization be available?
+## Is the project open source?
 
 Yes.
 
-Cloud synchronization is planned for future releases.
+The project is available under the MIT License.
 
 ---
 
-## Will the platform support multiple users?
+## What future features are planned?
 
-Yes.
+The roadmap includes:
 
-Future versions will include:
-
-- Multi-user accounts
-- Role-based access
-- Team management
+- Android application
 - Cloud synchronization
-
----
-
-## Will POS Ledger NG integrate with banks?
-
-Integration with banking APIs and payment platforms is planned as the product evolves.
-
----
-
-## How will POS Ledger NG generate revenue?
-
-Potential revenue streams include:
-
-- Premium subscriptions
-- Enterprise licensing
-- API integrations
-- Professional support
-- Business analytics services
-
----
-
-## What stage is the project?
-
-Current Stage:
-
-**Minimum Viable Product (MVP)**
-
-The platform is being improved through user feedback, mentorship, and accelerator programs.
+- AI-powered business insights
+- Multi-user accounts
+- Secure authentication
+- Receipt printing
+- Inventory management
+- Expense tracking
+- Banking API integrations
+- Analytics dashboard
 
 ---
 
 ## How can I contribute?
 
-Contributions are welcome.
+Contributions are welcome through GitHub.
 
 You can contribute by:
 
 - Improving documentation
 - Reporting bugs
 - Suggesting new features
-- Enhancing the user interface
-- Optimizing performance
+- Fixing issues
 - Improving security
+- Optimizing performance
 
-Please read **CONTRIBUTING.md** before submitting contributions.
-
----
-
-## Where can I learn more?
-
-GitHub Repository:
-
-https://github.com/mukhtaraabbasglobalent-creator/POS-Ledger-NG
+Please read CONTRIBUTING.md before submitting contributions.
 
 ---
 
-## Contact
+## How can I contact the project?
 
 Founder:
 
-**Mukhtar Aliyu**
+Mukhtar Aliyu
+
+GitHub:
+https://github.com/mukhtaraabbasglobalent-creator
 
 Project:
-
-**POS Ledger NG**
-
-Thank you for your interest in POS Ledger NG.
+POS Ledger NG
