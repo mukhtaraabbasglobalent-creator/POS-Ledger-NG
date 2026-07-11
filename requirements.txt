@@ -1,2 +1,2 @@
-sqlite3
-datetime
+# No external dependencies required.
+# POS Ledger NG currently uses only Python standard library modules.
