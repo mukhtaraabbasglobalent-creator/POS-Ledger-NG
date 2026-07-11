@@ -1,315 +1,241 @@
 # 💳 POS Ledger NG
-### Intelligent Financial Tracking System for POS Agents & Small Businesses
 
-![Python](https://img.shields.io/badge/Python-100%25-blue)
-![Database](https://img.shields.io/badge/Database-SQLite-lightgrey)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Status](https://img.shields.io/badge/Project-Active-success)
+> **Smart Financial Management Platform for POS Agents and Small Businesses**
 
----
-
-## 📌 Project Overview
-
-The **POS Agent Financial Tracker System** is a fintech support application developed to help **POS agents, mobile money operators, and small business owners** improve financial accountability through structured transaction tracking and reporting.
-
-The system records business transactions, calculates service charges automatically, monitors financial performance, and generates reports that support auditing and tax readiness.
-
-This project focuses on improving transparency, accountability, and business management for operators within the informal financial sector.
+![Python](https://img.shields.io/badge/Python-3.x-blue)
+![SQLite](https://img.shields.io/badge/Database-SQLite-green)
+![Platform](https://img.shields.io/badge/Platform-Desktop-orange)
+![Status](https://img.shields.io/badge/Status-MVP-success)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ---
 
-## 🌍 Problem Statement
+# 🚀 About POS Ledger NG
 
-Many POS agents and small businesses experience challenges such as:
+POS Ledger NG is an early-stage financial technology (FinTech) platform designed to help POS agents, mobile money operators, and small businesses simplify their financial operations through digital record keeping, automated transaction tracking, and business reporting.
+
+The platform was created to replace manual record books with a simple digital solution that improves financial accountability, business performance, and operational efficiency.
+
+Our vision is to become the trusted financial operating platform for Africa's growing network of POS agents and micro-enterprises.
+
+---
+
+# 🌍 Mission
+
+To empower POS agents and small businesses with affordable digital financial tools that improve transparency, simplify bookkeeping, strengthen financial management, and promote financial inclusion.
+
+---
+
+# 🎯 Vision
+
+To build Africa's leading financial management platform for POS agents and small businesses, enabling millions of entrepreneurs to manage their finances confidently and grow sustainable businesses.
+
+---
+
+# ❗ Problem Statement
+
+Many POS agents and small business owners still rely on notebooks or manual calculations to manage daily financial activities.
+
+Common challenges include:
 
 - Poor transaction record keeping
-- Difficulty tracking daily profit
-- Inaccurate cash flow monitoring
-- Missing financial records during auditing
-- Lack of tax-ready reporting systems
-- Manual calculations leading to errors
+- Difficulty calculating daily profits
+- Cash shortages caused by manual errors
+- Missing financial records during audits
+- Lack of organized reports
+- Difficulty preparing tax records
+- Limited business performance insights
 
-These challenges can result in financial leakage, poor decision-making, and business inefficiency.
-
----
-
-## 💡 Solution
-
-The **POS Agent Financial Tracker System** provides a structured digital solution to:
-
-✅ Record deposits and withdrawals
-
-✅ Automatically calculate transaction charges
-
-✅ Monitor daily and monthly financial performance
-
-✅ Maintain organized financial records
-
-✅ Generate exportable reports for auditing and tax analysis
-
-✅ Improve business accountability and financial visibility
+These challenges reduce productivity, increase financial risks, and make business growth more difficult.
 
 ---
 
-## 🎯 Project Objectives
+# 💡 Our Solution
 
-This project was designed to:
+POS Ledger NG provides a digital financial management platform that helps businesses:
 
-- Track **cash inflow (deposits)** and **cash outflow (withdrawals)**
-- Automatically compute service charges
-- Calculate transaction profit
-- Monitor business cash balance
-- Support financial reporting
-- Improve business accountability for POS operators
+- Record deposits and withdrawals
+- Automatically calculate transaction charges
+- Monitor daily and monthly performance
+- Track profitability
+- Generate financial reports
+- Improve business accountability
+- Maintain organized digital records
+- Support tax readiness
+- Reduce bookkeeping errors
 
 ---
 
-## ⚙️ Core Features
+# 📌 Current Stage
 
-### ✅ Transaction Recording
+**Product Stage:** Minimum Viable Product (MVP)
 
-Stores transaction details including:
+The current MVP demonstrates the core financial tracking capabilities of the platform. It is intended as a foundation for future enhancements and user validation.
 
-- Transaction type
+Current capabilities include:
+
+- Desktop application
+- SQLite database
+- Automated charge calculation
+- Transaction recording
+- Daily reports
+- Monthly reports
+- CSV export
+
+---
+
+# 👥 Target Customers
+
+POS Ledger NG is designed for:
+
+- POS Agents
+- Mobile Money Operators
+- Small Businesses
+- Retail Shops
+- Mini Markets
+- Cooperative Societies
+- Business Centers
+- Informal Financial Businesses
+
+---
+
+# ⚙ Core Features
+
+## Transaction Recording
+
+Record:
+
+- Deposits
+- Withdrawals
 - Transaction amount
-- Date and time
-- Service charges
-- Profit earned
-
-All data is securely stored using a **SQLite database (`pos_agent.db`)**.
+- Date
+- Time
+- Charges
+- Profit
 
 ---
 
-### 💰 Automatic Charge Calculation
+## Automatic Charge Calculation
 
-Transaction charges are calculated automatically based on transaction amount.
+Automatically calculates service charges based on configured pricing rules.
+
+Current pricing:
 
 | Transaction Amount | Charge |
-|--------------------|---------|
+|-------------------|--------|
 | ₦1,000 – ₦9,999 | ₦100 |
 | ₦10,000 – ₦19,999 | ₦200 |
 
-This reduces manual errors and improves consistency.
-
 ---
 
-### 📊 Financial Summaries
+## Business Dashboard
 
-The system provides:
+Provides financial summaries including:
 
-### Daily Summary
-- Total Deposits
-- Total Withdrawals
-- Charges Earned
-- Profit Generated
+- Daily Deposits
+- Daily Withdrawals
+- Daily Charges
+- Daily Profit
 - Business Cash Position
 
-### Monthly Summary
-Aggregated reports for:
+Monthly reporting includes:
 
 - Total Transactions
 - Total Charges
 - Monthly Profit
-- Business Performance Overview
+- Performance Overview
 
 ---
 
-### 💾 Export Reports
+## Report Generation
 
-Generate exportable reports in **CSV format** for:
+Generate CSV reports suitable for:
 
 - Auditing
-- Business tracking
-- Record keeping
-- Tax preparation
-- Financial analysis
-
-Example report formats:
-
-```text
-Daily_Report_YYYY-MM-DD.csv
-Monthly_Report_YYYY-MM.csv
-```
+- Record Keeping
+- Financial Analysis
+- Business Reviews
+- Tax Preparation
 
 ---
 
-## 🧩 System Workflow
+## Database Management
 
-### Application Flow
+Uses SQLite to securely store business records locally.
 
-```text
+---
+
+# 🏗 System Architecture
+
+```
 User
-   ↓
-GUI Interface
-   ↓
-Transaction Processing
-   ↓
-SQLite Database Storage
-   ↓
-Automatic Calculations
-   ↓
-Daily/Monthly Summaries
-   ↓
-CSV Report Export
-```
-
----
-## 🏗️ System Architecture
-
-The diagram below illustrates the architecture and operational flow of the POS Agent Financial Tracker System.
-
-<p align="center">
-  <img src="system_architecture.png" width="850"/>
-</p>
-### Architecture Components
-
-### 1. User Interface Layer
-
-Provides a simple interface for users to:
-
-- Add transactions
-- View reports
-- Monitor business records
-
-Implemented using:
-
-```text
-gui_app.py
+   │
+GUI (Tkinter)
+   │
+Business Logic
+   │
+SQLite Database
+   │
+Financial Calculations
+   │
+Reports
+   │
+CSV Export
 ```
 
 ---
 
-### 2. Business Logic Layer
+# 📂 Project Structure
 
-Handles:
-
-- Charge calculations
-- Profit computation
-- Financial summaries
-
-Implemented using:
-
-```text
-calculations.py
 ```
-
----
-
-### 3. Database Layer
-
-Responsible for:
-
-- Storing transactions
-- Maintaining persistent records
-- Data retrieval
-
-Implemented using:
-
-```text
-database.py
-```
-
-Database technology:
-
-```text
-SQLite (pos_agent.db)
-```
-
----
-
-### 4. Reporting Layer
-
-Responsible for:
-
-- Daily reports
-- Monthly reports
-- CSV export functionality
-
-Implemented using:
-
-```text
-reports.py
-```
-
----
-
-## 📂 Project Structure
-
-```text
-POS-Agent-Tracker/
-│── app.py
-│── gui_app.py
-│── calculations.py
-│── database.py
-│── reports.py
-│── requirements.txt
-│── README.md
-│── LICENSE
+POS-Ledger-NG/
+│
+├── app.py
+├── gui_app.py
+├── calculations.py
+├── database.py
+├── reports.py
+├── requirements.txt
+├── README.md
+├── LICENSE
 │
 ├── assets/
-│   └── system architecture png/
-│       └── system_architecture.png
+│   └── system_architecture.png
 │
 └── pos_agent.db
 ```
 
 ---
 
-## 💻 Technology Stack
+# 💻 Technology Stack
 
 | Category | Technology |
-|----------|-------------|
-| Programming Language | Python |
+|-----------|------------|
+| Language | Python |
 | Database | SQLite |
-| GUI Framework | Tkinter |
-| Data Export | CSV |
-| Architecture | Modular Python Design |
+| GUI | Tkinter |
+| Reports | CSV |
+| Architecture | Modular Python |
 
 ---
 
-## 🖼 Application Screenshots
+# 🚀 Installation
 
-```text
-screenshots/main_menu.png
-screenshots/add_transaction.png
-screenshots/daily_summary.png
-screenshots/monthly_summary.png
-screenshots/export.png
-```
-
----
-
-## 🎬 Demo Video
-
-```text
-demo/POS_Tracker_Demo.mp4
-```
-
-*(Replace with your actual demo video link if available.)*
-
----
-
-## 🚀 How to Run the Project
-
-### Step 1: Clone Repository
+Clone the repository
 
 ```bash
-git clone https://github.com/mukhtaraabbasglobalent-creator/POS-Agent-Tracker.git
+git clone https://github.com/mukhtaraabbasglobalent-creator/POS-Ledger-NG.git
+
+cd POS-Ledger-NG
 ```
 
-### Step 2: Open Project Folder
-
-```bash
-cd POS-Agent-Tracker
-```
-
-### Step 3: Install Requirements
+Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 4: Run Application
+Run the application
 
 ```bash
 python gui_app.py
@@ -317,72 +243,150 @@ python gui_app.py
 
 ---
 
-## 🧪 Example Use Cases
+# 📊 Example Use Cases
 
-Useful for:
+POS Ledger NG can support:
 
-- POS agents
-- Mobile money operators
-- Small retail businesses
-- Informal financial businesses
-- Financial record keeping
-
----
-
-## 📈 Future Enhancements
-
-- ☁️ Cloud-based data storage
-- 📄 PDF report generation
-- 🤖 AI-powered business insights
-- 📱 Mobile application version
-- 🔐 Advanced authentication
-- 📊 Analytics dashboard
+- Daily POS transaction tracking
+- Mobile money operations
+- Cash flow monitoring
+- Business reporting
+- Financial accountability
+- Business performance monitoring
+- Tax-ready record keeping
 
 ---
 
-## 🔒 Security Considerations
+# 🔒 Security
 
-- Local database storage
-- Reduced manual errors
-- Structured financial records
+Current implementation includes:
 
-Future improvements:
+- Local SQLite data storage
+- Structured transaction records
+- Reduced manual calculation errors
+
+Future security improvements may include:
 
 - PIN authentication
-- Database encryption
-- Cloud backup integration
+- Encrypted local database
+- Secure cloud backup
+- User account management
 
 ---
 
-## 🌍 Business & Social Impact
+# 🌍 Business Impact
 
-### Financial Inclusion
-Helping small businesses improve financial organization.
+## Financial Inclusion
 
-### Business Accountability
-Reducing poor financial management.
+Supports digital financial management for underserved businesses.
 
-### Digital Transformation
-Encouraging digital financial record keeping.
+## Accountability
 
-### Tax Readiness
-Helping operators maintain structured records.
+Encourages transparent financial record keeping.
 
----
+## Digital Transformation
 
-## 👤 Project Author
+Reduces dependence on manual bookkeeping.
 
-**Mukhtar A Abbas Global Ent.**
+## Tax Readiness
 
-Focused on:
-
-- Fintech systems
-- Cybersecurity learning
-- Business technology solutions
-- Financial accountability tools
+Helps businesses maintain organized financial records.
 
 ---
 
-## 📜 License
+# 📈 Product Roadmap
 
-Licensed under the **MIT License**.
+Future development priorities include:
+
+- Cloud synchronization
+- Android application
+- PDF report generation
+- Analytics dashboard
+- Multi-user support
+- Business insights
+- Expense tracking
+- Inventory management
+- Customer management
+- Receipt printing
+- Data backup and recovery
+- Secure authentication
+- API integrations with financial services
+
+Roadmap items represent planned improvements and are not yet part of the current MVP.
+
+---
+
+# 💼 Business Model
+
+Potential revenue streams include:
+
+- Freemium access
+- Premium subscription plans
+- Enterprise packages for agent networks
+- Business analytics services
+- API integration services
+
+Business model details will continue to evolve as the product is validated with users.
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome.
+
+Areas where contributors can help include:
+
+- Python development
+- Testing
+- Documentation
+- User interface improvements
+- Performance optimization
+- Security enhancements
+- Bug fixes
+
+---
+
+# 🧪 Testing
+
+Testing focuses on:
+
+- Transaction recording
+- Charge calculations
+- Profit calculations
+- Database operations
+- Daily reports
+- Monthly reports
+- CSV export
+- Input validation
+
+Bug reports and suggestions are welcome through GitHub Issues.
+
+---
+
+# 👤 Author
+
+## Mukhtar A Abbas Global Ent.
+
+Founder of POS Ledger NG
+
+Areas of Interest
+
+- Financial Technology (FinTech)
+- Cybersecurity
+- Digital Financial Inclusion
+- Business Technology
+- Financial Accountability
+
+---
+
+# 📜 License
+
+This project is licensed under the MIT License.
+
+---
+
+# ⭐ Support the Project
+
+If you find this project useful, consider starring the repository on GitHub and sharing your feedback through GitHub Issues.
+
+Every suggestion helps improve POS Ledger NG for the businesses it is designed to serve.
