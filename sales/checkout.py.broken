@@ -1,0 +1,563 @@
+import sqlite3
+from datetime import datetime
+
+from staff.manage import current_user
+from audit import log_action
+
+DB_NAME = "data/posledger.db"
+
+
+def get_connection():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
+def checkout(cart):
+
+    if not cart:
+        print("\n🛒 Cart is empty.")
+        return False
+
+    conn = get_connection()
+
+    try:
+        cur = conn.cursor()
+
+        # ==========================================
+        # STAFF
+        # ==========================================
+
+        staff = current_user()
+
+        if staff:
+            staff_name = staff["fullname"]
+        else:
+            staff_name = "Unknown"
+
+        # ==========================================
+        # CUSTOMER
+        # ==========================================
+
+        customer_id = cart[0].get("customer_id")
+
+        customer_name = "Walk-in Customer"
+        customer_phone = ""
+
+        if customer_id:
+            cur.execute("""
+                SELECT id, fullname, phone
+                FROM customers
+                WHERE id = ?
+            """, (customer_id,))
+
+            customer = cur.fetchone()
+
+            if customer:
+                customer_name = customer["fullname"]
+                customer_phone = customer["phone"] or ""
+
+        # ==========================================
+        # VERIFY CART PRODUCTS
+        # ==========================================
+
+        verified_items = []
+
+        subtotal = 0.0
+        total_cogs = 0.0
+        total_profit = 0.0
+        total_quantity = 0.0
+
+        for item in cart:
+
+            product_id = int(item["product_id"])
+            quantity = float(item["quantity"])
+
+            if quantity <= 0:
+                raise ValueError(
+                    "Quantity must be greater than zero."
+                )
+
+            cur.execute("""
+                SELECT
+                    id,
+                    product_name,
+                    sku,
+                    current_stock,
+                    buying_price,
+                    selling_price
+                FROM products
+                WHERE id = ?
+            """, (product_id,))
+
+            product = cur.fetchone()
+
+            if product is None:
+                raise ValueError(
+                    f"Product {product_id} was not found."
+                )
+
+            stock = float(
+                product["current_stock"] or 0
+            )
+
+            buying_price = float(
+                product["buying_price"] or 0
+            )
+
+            selling_price = float(
+                product["selling_price"] or 0
+            )
+
+            if quantity > stock:
+                raise ValueError(
+                    f"Insufficient stock for "
+                    f"{product['product_name']}. "
+                    f"Available: {stock:g}"
+                )
+
+            line_subtotal = (
+                selling_price * quantity
+            )
+
+            line_cogs = (
+                buying_price * quantity
+            )
+
+            line_profit = (
+                line_subtotal - line_cogs
+            )
+
+            subtotal += line_subtotal
+            total_cogs += line_cogs
+            total_profit += line_profit
+            total_quantity += quantity
+
+            verified_items.append({
+                "product_id": product_id,
+                "product_name": product["product_name"],
+                "sku": product["sku"],
+                "quantity": quantity,
+                "buying_price": buying_price,
+                "selling_price": selling_price,
+                "subtotal": line_subtotal,
+                "cogs": line_cogs,
+                "profit": line_profit,
+                "stock_before": stock
+            })
+
+        if not verified_items:
+            print("\n🛒 No valid products.")
+            conn.close()
+            return False
+
+        # ==========================================
+        # CHECKOUT DISPLAY
+        # ==========================================
+
+        print("\n" + "=" * 44)
+        print("              CHECKOUT")
+        print("=" * 44)
+
+        for item in verified_items:
+
+            print(
+                f"\n{item['product_name']}"
+            )
+
+            print(
+                f"SKU      : {item['sku']}"
+            )
+
+            print(
+                f"Qty      : {item['quantity']:g}"
+            )
+
+            print(
+                f"Price    : "
+                f"₦{item['selling_price']:,.2f}"
+            )
+
+            print(
+                f"Subtotal : "
+                f"₦{item['subtotal']:,.2f}"
+            )
+
+            print("-" * 44)
+
+        print(
+            f"SUBTOTAL : ₦{subtotal:,.2f}"
+        )
+
+        # ==========================================
+        # DISCOUNT
+        # ==========================================
+
+        try:
+            discount = float(
+                input(
+                    "Discount (₦, 0 if none): "
+                ).strip() or 0
+            )
+        except ValueError:
+            print("❌ Invalid discount.")
+            conn.close()
+            return False
+
+        if discount < 0:
+            discount = 0
+
+        if discount > subtotal:
+            discount = subtotal
+
+        # ==========================================
+        # VAT
+        # ==========================================
+
+        try:
+            vat_percent = float(
+                input(
+                    "VAT % (0 if none): "
+                ).strip() or 0
+            )
+        except ValueError:
+            print("❌ Invalid VAT.")
+            conn.close()
+            return False
+
+        if vat_percent < 0:
+            vat_percent = 0
+
+        taxable_amount = (
+            subtotal - discount
+        )
+
+        vat_amount = (
+            taxable_amount *
+            vat_percent / 100
+        )
+
+        grand_total = (
+            taxable_amount + vat_amount
+        )
+
+        # ==========================================
+        # PAYMENT METHOD
+        # ==========================================
+
+        print("""
+====================================
+          PAYMENT METHOD
+====================================
+1. Cash
+2. Transfer
+3. Credit
+0. Cancel
+====================================
+""")
+
+        payment = input(
+            "Select payment: "
+        ).strip()
+
+        payment_names = {
+            "1": "Cash",
+            "2": "Transfer",
+            "3": "Credit"
+        }
+
+        if payment == "0":
+            print("\n❌ Checkout cancelled.")
+            conn.close()
+            return False
+
+        if payment not in payment_names:
+            print("\n❌ Invalid payment method.")
+            conn.close()
+            return False
+
+        payment_name = payment_names[payment]
+
+        # Credit sales require customer
+                if payment == "3" and not customer_id:
+            print(
+                "\n❌ Credit sales require "
+                "a registered customer."
+            )
+            conn.close()
+            return False
+
+        # ==========================================
+        # SALE SUMMARY
+        # ==========================================
+
+        gross_margin = 0.0
+
+        if grand_total > 0:
+            gross_margin = (
+                total_profit / grand_total
+            ) * 100
+
+        print("\n" + "=" * 44)
+        print("             SALE SUMMARY")
+        print("=" * 44)
+
+        print(f"Customer       : {customer_name}")
+
+        if customer_phone:
+            print(f"Phone          : {customer_phone}")
+
+        print(f"Items          : {len(verified_items)}")
+        print(f"Units          : {total_quantity:g}")
+        print(f"Subtotal       : ₦{subtotal:,.2f}")
+        print(f"Discount       : ₦{discount:,.2f}")
+        print(f"VAT            : ₦{vat_amount:,.2f}")
+        print(f"Grand Total    : ₦{grand_total:,.2f}")
+        print(f"COGS           : ₦{total_cogs:,.2f}")
+        print(f"Gross Profit   : ₦{total_profit:,.2f}")
+        print(f"Gross Margin   : {gross_margin:.2f}%")
+        print(f"Payment        : {payment_name}")
+
+        print("=" * 44)
+
+        # ==========================================
+        # CONFIRM SALE
+        # ==========================================
+
+        confirm = input(
+            "Complete Sale? (Y/N): "
+        ).strip().upper()
+
+        if confirm != "Y":
+            print("\n❌ Sale cancelled.")
+            conn.close()
+            return False
+
+        # ==========================================
+        # START DATABASE TRANSACTION
+        # ==========================================
+
+        cur.execute("BEGIN")
+
+        now = datetime.now()
+
+        sale_date = now.strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+
+        today = now.strftime("%Y%m%d")
+
+        # ==========================================
+        # RECEIPT NUMBER
+        # ==========================================
+
+        cur.execute("""
+            SELECT IFNULL(MAX(id), 0) + 1
+            FROM sales
+        """)
+
+        next_sale = int(
+            cur.fetchone()[0]
+        )
+
+        receipt_no = (
+            f"PLN-{today}-{next_sale:06d}"
+        )
+
+        # ==========================================
+        # SALES HEADER
+        # ==========================================
+
+        average_buying_price = (
+            total_cogs / total_quantity
+        )
+
+        average_selling_price = (
+            subtotal / total_quantity
+        )
+
+        cur.execute("""
+            INSERT INTO sales
+            (
+                product_id,
+                quantity,
+                buying_price,
+                selling_price,
+                total_amount,
+                total_profit,
+                sale_date,
+                staff_name,
+                receipt_no,
+                payment_method,
+                discount,
+                vat,
+                status,
+                customer_id,
+                cost_snapshot,
+                cogs,
+                gross_profit,
+                gross_margin
+            )
+            VALUES
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+             ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            verified_items[0]["product_id"],
+            total_quantity,
+            average_buying_price,
+            average_selling_price,
+            grand_total,
+            total_profit,
+            sale_date,
+            staff_name,
+            receipt_no,
+            payment_name,
+            discount,
+            vat_amount,
+            "COMPLETED",
+            customer_id,
+            total_cogs,
+            total_cogs,
+            total_profit,
+            gross_margin
+        ))
+
+        sale_id = cur.lastrowid
+
+        # ==========================================
+        # SAVE SALE ITEMS
+        # ==========================================
+
+        for item in verified_items:
+
+            cur.execute("""
+                INSERT INTO sale_items
+                (
+                    sale_id,
+                    product_id,
+                    quantity,
+                    buying_price,
+                    selling_price,
+                    profit,
+                    subtotal
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                sale_id,
+                item["product_id"],
+                item["quantity"],
+                item["buying_price"],
+                item["selling_price"],
+                item["profit"],
+                item["subtotal"]
+            ))
+
+        # ==========================================
+        # UPDATE INVENTORY
+        # ==========================================
+
+        for item in verified_items:
+
+            new_stock = (
+                item["stock_before"]
+                - item["quantity"]
+            )
+
+            cur.execute("""
+                UPDATE products
+                SET current_stock = ?
+                WHERE id = ?
+            """, (
+                new_stock,
+                item["product_id"]
+            ))
+
+            if cur.rowcount != 1:
+                raise RuntimeError(
+                    "Stock update failed for "
+                    f"{item['product_name']}"
+                )
+
+            # ======================================
+            # INVENTORY AUDIT MOVEMENT
+            # ======================================
+
+            cur.execute("""
+                INSERT INTO inventory_movements
+                (
+                    product_id,
+                    movement_type,
+                    quantity,
+                    balance_after,
+                    reference,
+                    remarks
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                item["product_id"],
+                "SALE",
+                item["quantity"],
+                new_stock,
+                receipt_no,
+                f"Sale {receipt_no}"
+            ))
+
+        # ==========================================
+        # COMMIT
+        # ==========================================
+
+        conn.commit()
+
+        # ==========================================
+        # AUDIT LOG
+        # ==========================================
+
+        try:
+            log_action(
+                "SALE_COMPLETED",
+                (
+                    f"Receipt={receipt_no}; "
+                    f"SaleID={sale_id}; "
+                    f"Amount={grand_total:.2f}; "
+                    f"Payment={payment_name}"
+                )
+            )
+        except Exception:
+            pass
+
+        # ==========================================
+        # SUCCESS RECEIPT
+        # ==========================================
+
+        print("\n" + "=" * 44)
+        print("          SALE COMPLETED")
+        print("=" * 44)
+
+        print(f"Receipt      : {receipt_no}")
+        print(f"Customer     : {customer_name}")
+        print(f"Total        : ₦{grand_total:,.2f}")
+        print(f"Payment      : {payment_name}")
+        print(f"Gross Profit : ₦{total_profit:,.2f}")
+
+        print("=" * 44)
+
+        print("✅ Sale saved successfully.")
+
+        return True
+
+    except Exception as error:
+
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+
+        print("\n❌ SALE FAILED")
+        print(f"Reason: {error}")
+        print("↩️ Database transaction rolled back.")
+
+        return False
+
+    finally:
+        conn.close()

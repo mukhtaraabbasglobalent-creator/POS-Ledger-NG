@@ -1,0 +1,557 @@
+import sqlite3
+
+DB_NAME = "data/posledger.db"
+
+def get_connection():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def sales_report(title, date_filter):
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    query = f"""
+        SELECT
+            COUNT(*) AS total_sales,
+            IFNULL(SUM(total_amount),0) AS sales_amount,
+            IFNULL(SUM(total_profit),0) AS profit
+        FROM sales
+        WHERE {date_filter}
+        AND status='COMPLETED'
+    """
+
+    cur.execute(query)
+
+    row = cur.fetchone()
+
+    print("\n====================================")
+    print(f"      {title}")
+    print("====================================")
+    print(f"Transactions : {row['total_sales']}")
+    print(f"Sales Amount : ₦{row['sales_amount']:,.2f}")
+    print(f"Profit       : ₦{row['profit']:,.2f}")
+    print("====================================")
+
+    conn.close()
+
+    input("\nPress Enter to continue...")
+
+
+def daily_sales_report():
+
+    sales_report(
+        "DAILY SALES REPORT",
+        "DATE(sale_date)=DATE('now','localtime')"
+    )
+
+    row = cur.fetchone()
+
+    print("\n====================================")
+    print("       DAILY SALES REPORT")
+    print("====================================")
+    print(f"Transactions : {row['total_sales']}")
+    print(f"Sales Amount : ₦{row['sales_amount']:,.2f}")
+    print(f"Profit       : ₦{row['profit']:,.2f}")
+    print("====================================")
+
+    conn.close()
+
+    input("\nPress Enter to continue...")
+
+def weekly_sales_report():
+
+    sales_report(
+        "WEEKLY SALES REPORT",
+        "DATE(sale_date)>=DATE('now','-6 day')"
+    )
+
+def monthly_sales_report():
+
+    sales_report(
+        "MONTHLY SALES REPORT",
+        "strftime('%Y-%m', sale_date)=strftime('%Y-%m','now')"
+    )
+
+def yearly_sales_report():
+
+    sales_report(
+        "YEARLY SALES REPORT",
+        "strftime('%Y', sale_date)=strftime('%Y','now')"
+    )
+
+def best_selling_products():
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            p.product_name,
+            SUM(si.quantity) AS qty_sold,
+            SUM(si.subtotal) AS total_sales,
+            SUM(si.profit) AS total_profit
+        FROM sale_items si
+        JOIN products p
+            ON si.product_id = p.id
+        GROUP BY si.product_id
+        ORDER BY qty_sold DESC
+        LIMIT 10
+    """)
+
+def least_selling_products():
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            p.product_name,
+            SUM(si.quantity) AS qty_sold,
+            SUM(si.subtotal) AS total_sales,
+            SUM(si.profit) AS total_profit
+        FROM sale_items si
+        JOIN products p
+            ON si.product_id = p.id
+        GROUP BY si.product_id
+        ORDER BY qty_sold ASC
+        LIMIT 10
+    """)
+
+def profit_analysis():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Product sales
+    cur.execute("""
+        SELECT
+            IFNULL(SUM(total_amount), 0),
+            IFNULL(SUM(total_profit), 0)
+        FROM sales
+        WHERE status = 'COMPLETED'
+    """)
+
+    sales_row = cur.fetchone()
+    sales_amount = sales_row[0] or 0
+    sales_profit = sales_row[1] or 0
+
+    # POS financial transactions
+    cur.execute("""
+        SELECT
+            IFNULL(SUM(amount), 0),
+            IFNULL(SUM(charge), 0),
+            IFNULL(SUM(provider_fee), 0),
+            IFNULL(SUM(profit), 0)
+        FROM transactions
+    """)
+
+    transaction_row = cur.fetchone()
+
+    transaction_amount = transaction_row[0] or 0
+    transaction_charges = transaction_row[1] or 0
+    transaction_fees = transaction_row[2] or 0
+    transaction_profit = transaction_row[3] or 0
+
+    # Expenses
+    cur.execute("""
+        SELECT IFNULL(SUM(amount), 0)
+        FROM expenses
+    """)
+
+    total_expenses = cur.fetchone()[0] or 0
+
+    # Refunds
+    cur.execute("""
+        SELECT IFNULL(SUM(total_amount), 0)
+        FROM sales
+        WHERE status = 'REFUNDED'
+    """)
+
+    total_refunds = cur.fetchone()[0] or 0
+
+    # Combined business figures
+    total_revenue = sales_amount + transaction_charges
+    gross_profit = sales_profit + transaction_profit
+    net_profit = gross_profit - total_expenses - total_refunds
+
+    if total_revenue > 0:
+        profit_margin = (net_profit / total_revenue) * 100
+    else:
+        profit_margin = 0
+
+    print("\n====================================")
+    print("          PROFIT ANALYSIS")
+    print("====================================")
+
+    print("\nPRODUCT SALES")
+    print("------------------------------------")
+    print(f"Sales Amount       : ₦{sales_amount:,.2f}")
+    print(f"Sales Profit       : ₦{sales_profit:,.2f}")
+
+    print("\nPOS TRANSACTIONS")
+    print("------------------------------------")
+    print(f"Transaction Amount : ₦{transaction_amount:,.2f}")
+    print(f"Customer Charges   : ₦{transaction_charges:,.2f}")
+    print(f"Provider Fees      : ₦{transaction_fees:,.2f}")
+    print(f"Transaction Profit  : ₦{transaction_profit:,.2f}")
+
+    print("\nBUSINESS TOTALS")
+    print("------------------------------------")
+    print(f"Total Revenue      : ₦{total_revenue:,.2f}")
+    print(f"Gross Profit       : ₦{gross_profit:,.2f}")
+    print(f"Expenses           : ₦{total_expenses:,.2f}")
+    print(f"Refunds            : ₦{total_refunds:,.2f}")
+    print(f"Net Profit         : ₦{net_profit:,.2f}")
+    print(f"Profit Margin      : {profit_margin:.2f}%")
+
+    print("====================================")
+
+    conn.close()
+
+    input("\nPress Enter to continue...")
+
+def business_summary():
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # ==============================
+    # PRODUCT SALES
+    # ==============================
+    cur.execute("""
+        SELECT
+            IFNULL(SUM(total_amount), 0),
+            IFNULL(SUM(total_profit), 0)
+        FROM sales
+        WHERE status = 'COMPLETED'
+    """)
+
+    sales_row = cur.fetchone()
+
+    product_sales = sales_row[0] or 0
+    product_profit = sales_row[1] or 0
+
+    # ==============================
+    # POS TRANSACTIONS
+    # ==============================
+    cur.execute("""
+        SELECT
+            IFNULL(SUM(amount), 0),
+            IFNULL(SUM(charge), 0),
+            IFNULL(SUM(provider_fee), 0),
+            IFNULL(SUM(profit), 0)
+        FROM transactions
+    """)
+
+    transaction_row = cur.fetchone()
+
+    transaction_volume = transaction_row[0] or 0
+    transaction_charges = transaction_row[1] or 0
+    provider_fees = transaction_row[2] or 0
+    transaction_profit = transaction_row[3] or 0
+
+    # ==============================
+    # EXPENSES
+    # ==============================
+    cur.execute("""
+        SELECT IFNULL(SUM(amount), 0)
+        FROM expenses
+    """)
+
+    total_expenses = cur.fetchone()[0] or 0
+
+    # ==============================
+    # CUSTOMERS
+    # ==============================
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM customers
+    """)
+
+    total_customers = cur.fetchone()[0] or 0
+
+    # ==============================
+    # PRODUCTS
+    # ==============================
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM products
+    """)
+
+    total_products = cur.fetchone()[0] or 0
+
+    # ==============================
+    # STOCK
+    # ==============================
+    cur.execute("""
+        SELECT IFNULL(SUM(current_stock), 0)
+        FROM products
+    """)
+
+    total_stock = cur.fetchone()[0] or 0
+
+    # ==============================
+    # BUSINESS CALCULATIONS
+    # ==============================
+
+    total_revenue = product_sales + transaction_charges
+
+    gross_profit = product_profit + transaction_profit
+
+    net_profit = gross_profit - total_expenses
+
+    if total_revenue > 0:
+        profit_margin = (net_profit / total_revenue) * 100
+    else:
+        profit_margin = 0
+
+    # ==============================
+    # DISPLAY
+    # ==============================
+
+    print("\n====================================")
+    print("      BUSINESS SUMMARY")
+    print("====================================")
+
+    print(f"Product Sales        : ₦{product_sales:,.2f}")
+    print(f"POS Charges          : ₦{transaction_charges:,.2f}")
+    print(f"Total Revenue        : ₦{total_revenue:,.2f}")
+
+    print("------------------------------------")
+
+    print(f"Product Profit       : ₦{product_profit:,.2f}")
+    print(f"POS Transaction Profit: ₦{transaction_profit:,.2f}")
+    print(f"Gross Profit         : ₦{gross_profit:,.2f}")
+
+    print(f"Expenses             : ₦{total_expenses:,.2f}")
+    print(f"Net Profit           : ₦{net_profit:,.2f}")
+    print(f"Profit Margin        : {profit_margin:.2f}%")
+
+    print("------------------------------------")
+
+    print(f"POS Volume           : ₦{transaction_volume:,.2f}")
+    print(f"Provider Fees        : ₦{provider_fees:,.2f}")
+
+    print("------------------------------------")
+
+    print(f"Products             : {total_products}")
+    print(f"Customers            : {total_customers}")
+    print(f"Stock Units          : {total_stock:,.2f}")
+
+    print("====================================")
+
+    conn.close()
+
+    input("\nPress Enter to continue...")
+    total_profit = cur.fetchone()[0]
+
+    # Total Expenses
+    cur.execute("""
+        SELECT IFNULL(SUM(amount),0)
+        FROM expenses
+    """)
+    total_expenses = cur.fetchone()[0]
+
+    # Products
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM products
+    """)
+    total_products = cur.fetchone()[0]
+
+    # Customers
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM customers
+    """)
+    total_customers = cur.fetchone()[0]
+
+    # Stock Units
+    cur.execute("""
+        SELECT IFNULL(SUM(current_stock),0)
+        FROM products
+    """)
+    total_stock = cur.fetchone()[0]
+
+    # Net Profit
+    net_profit = total_profit - total_expenses
+
+    print("\n====================================")
+    print("      BUSINESS SUMMARY")
+    print("====================================")
+    print(f"Total Sales      : ₦{total_sales:,.2f}")
+    print(f"Gross Profit     : ₦{total_profit:,.2f}")
+    print(f"Expenses         : ₦{total_expenses:,.2f}")
+    print(f"Net Profit       : ₦{net_profit:,.2f}")
+    print("------------------------------------")
+    print(f"Products         : {total_products}")
+    print(f"Customers        : {total_customers}")
+    print(f"Stock Units      : {total_stock}")
+    print("====================================")
+
+    conn.close()
+
+    input("\nPress Enter to continue...")
+
+    total_sales, gross_profit = cur.fetchone()
+
+    # Expenses
+    cur.execute("""
+        SELECT IFNULL(SUM(amount),0)
+        FROM expenses
+    """)
+
+    total_expenses = cur.fetchone()[0]
+
+    # Refunds
+    cur.execute("""
+        SELECT IFNULL(SUM(total_amount),0)
+        FROM sales
+        WHERE status='REFUNDED'
+    """)
+
+    total_refunds = cur.fetchone()[0]
+
+    net_profit = gross_profit - total_expenses
+
+    profit_margin = 0
+
+    if total_sales > 0:
+        profit_margin = (net_profit / total_sales) * 100
+
+    print("\n====================================")
+    print("        PROFIT ANALYSIS")
+    print("====================================")
+    print(f"Gross Sales    : ₦{total_sales:,.2f}")
+    print(f"Gross Profit   : ₦{gross_profit:,.2f}")
+    print(f"Expenses       : ₦{total_expenses:,.2f}")
+    print(f"Refunds        : ₦{total_refunds:,.2f}")
+    print(f"Net Profit     : ₦{net_profit:,.2f}")
+    print(f"Profit Margin  : {profit_margin:.2f}%")
+    print("====================================")
+
+    conn.close()
+
+    input("\nPress Enter to continue...")
+
+    rows = cur.fetchall()
+
+    print("\n====================================")
+    print("     LEAST SELLING PRODUCTS")
+    print("====================================")
+
+    if not rows:
+        print("No sales found.")
+    else:
+        for i, row in enumerate(rows, start=1):
+            print(
+                f"{i}. {row['product_name']}\n"
+                f"   Qty Sold : {row['qty_sold']}\n"
+                f"   Sales    : ₦{row['total_sales']:,.2f}\n"
+                f"   Profit   : ₦{row['total_profit']:,.2f}\n"
+            )
+
+    print("====================================")
+
+    conn.close()
+
+    input("\nPress Enter to continue...")
+
+    rows = cur.fetchall()
+
+    print("\n====================================")
+    print("     BEST SELLING PRODUCTS")
+    print("====================================")
+
+    if not rows:
+        print("No sales found.")
+    else:
+        for i, row in enumerate(rows, start=1):
+            print(
+                f"{i}. {row['product_name']}\n"
+                f"   Qty Sold : {row['qty_sold']}\n"
+                f"   Sales    : ₦{row['total_sales']:,.2f}\n"
+                f"   Profit   : ₦{row['total_profit']:,.2f}\n"
+            )
+
+    print("====================================")
+
+    conn.close()
+
+    input("\nPress Enter to continue...")
+
+    row = cur.fetchone()
+
+    print("\n====================================")
+    print("      WEEKLY SALES REPORT")
+    print("====================================")
+    print(f"Transactions : {row['total_sales']}")
+    print(f"Sales Amount : ₦{row['sales_amount']:,.2f}")
+    print(f"Profit       : ₦{row['profit']:,.2f}")
+    print("====================================")
+
+    conn.close()
+
+    input("\nPress Enter to continue...")
+
+
+def analytics_menu():
+
+    while True:
+
+        print("""
+====================================
+      BUSINESS ANALYTICS
+====================================
+1. Daily Sales Report
+2. Weekly Sales Report
+3. Monthly Sales Report
+4. Yearly Sales Report
+5. Best Selling Products
+6. Least Selling Products
+7. Refund Report
+8. Profit Analysis
+9. Stock Value Report
+10. Business Summary Dashboard
+0. Back
+====================================
+""")
+
+        choice = input("Select option: ").strip()
+
+        if choice == "1":
+            daily_sales_report()
+
+        elif choice == "2":
+            weekly_sales_report()
+
+        elif choice == "3":
+            monthly_sales_report()
+
+        elif choice == "4":
+            yearly_sales_report()
+
+        elif choice == "5":
+            best_selling_products()
+
+        elif choice == "6":
+            least_selling_products()
+
+        elif choice == "7":
+            refund_report()
+
+        elif choice == "8":
+            profit_analysis()
+
+        elif choice == "9":
+            stock_value_report()
+
+        elif choice == "10":
+            business_summary()
+
+        elif choice == "0":
+            break
+
+        else:
+            print("\n❌ Invalid option.")

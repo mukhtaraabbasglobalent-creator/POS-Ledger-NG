@@ -1,0 +1,123 @@
+import sqlite3
+from datetime import datetime
+
+from dashboard.settings import (
+    is_balance_hidden,
+    toggle_balance
+)
+
+from balance import get_balance
+
+DB_NAME = "data/posledger.db"
+
+
+def get_connection():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def mask(value):
+    if is_balance_hidden():
+        return "👁 Hidden"
+    return f"₦{value:,.2f}"
+
+
+def show_dashboard():
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    cur.execute("""
+        SELECT
+            COALESCE(SUM(total_amount),0) AS sales,
+            COALESCE(SUM(total_profit),0) AS profit
+        FROM sales
+        WHERE DATE(sale_date)=?
+    """, (today,))
+
+    sales = cur.fetchone()
+
+    today_sales = sales["sales"]
+    today_profit = sales["profit"]
+
+    row = get_balance()
+
+    cash = row["cash_balance"]
+    wallet = row["wallet_balance"]
+    opening = row["opening_balance"]
+    try:
+        cur.execute("SELECT COUNT(*) AS total FROM products")
+        products = cur.fetchone()["total"]
+    except sqlite3.OperationalError:
+        products = 0
+
+    try:
+        cur.execute("SELECT COUNT(*) AS total FROM customers")
+        customers = cur.fetchone()["total"]
+    except sqlite3.OperationalError:
+        customers = 0
+
+    try:
+        cur.execute("SELECT COUNT(*) AS total FROM suppliers")
+        suppliers = cur.fetchone()["total"]
+    except sqlite3.OperationalError:
+        suppliers = 0
+
+    try:
+        cur.execute("""
+            SELECT COUNT(*) AS total
+            FROM products
+            WHERE current_stock <= min_stock
+        """)
+        low_stock = cur.fetchone()["total"]
+    except sqlite3.OperationalError:
+        low_stock = 0
+
+    print("\n========================================")
+    print("         POS LEDGER NG DASHBOARD")
+    print("========================================")
+    print(f"Today's Sales  : ₦{today_sales:,.2f}")
+    print(f"Today's Profit : ₦{today_profit:,.2f}")
+    print(f"Opening Balance: {mask(opening)}")
+    print(f"Cash Balance   : {mask(cash)}")
+    print(f"Wallet Balance : {mask(wallet)}")
+    print("----------------------------------------")
+    print(f"Products       : {products}")
+    print(f"Customers      : {customers}")
+    print(f"Suppliers      : {suppliers}")
+    print(f"Low Stock Items: {low_stock}")
+    print("========================================")
+
+    conn.close()
+def dashboard_menu():
+
+    while True:
+
+        show_dashboard()
+
+        print("""
+1. Refresh Dashboard
+2. 👁 Show / Hide Balance
+0. Back
+""")
+
+        choice = input("Select option: ").strip()
+
+        if choice == "1":
+            continue
+
+        elif choice == "2":
+            toggle_balance()
+
+        elif choice == "0":
+            break
+
+        else:
+            print("❌ Invalid option.")
+
+
+if __name__ == "__main__":
+    dashboard_menu()

@@ -1,0 +1,2 @@
+id,purchase_no,supplier_name,product_id,quantity,buying_price,total_cost,purchase_date
+1,PUR-20260731202418,ABC Supplier,1,10.0,803.57,8035.700000000001,2026-07-31 19:24:18

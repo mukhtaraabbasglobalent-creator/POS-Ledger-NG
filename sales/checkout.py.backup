@@ -1,0 +1,305 @@
+import sqlite3
+from datetime import datetime
+
+from balance import (
+    update_cash_balance,
+    update_wallet_balance
+)
+from audit import log_action
+from staff.manage import current_user
+
+DB_NAME = "data/posledger.db"
+
+
+def get_connection():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def checkout(cart):
+
+    if not cart:
+        print("\n🛒 Cart is empty.")
+        return False
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    today = datetime.now().strftime("%Y%m%d")
+
+    cur.execute("SELECT IFNULL(MAX(id),0)+1 FROM sales")
+    next_sale = cur.fetchone()[0]
+
+    receipt_no = f"PLN-{today}-{next_sale:06d}"
+
+    sale_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    subtotal = 0
+    total_profit = 0
+
+    print("\n====================================")
+    print("             CHECKOUT")
+    print("====================================")
+
+    for item in cart:
+
+        line_total = (
+            item["selling_price"] *
+            item["quantity"]
+        )
+
+        line_profit = (
+            item["selling_price"] -
+            item["buying_price"]
+        ) * item["quantity"]
+
+        subtotal += line_total
+        total_profit += line_profit
+
+        print(
+            f"{item['product_name']}  "
+            f"x{item['quantity']}  "
+            f"₦{line_total:,.2f}"
+        )
+
+    print("------------------------------------")
+    print(f"Subtotal : ₦{subtotal:,.2f}")
+
+    try:
+        discount = float(input("Discount (₦): ") or 0)
+    except ValueError:
+        discount = 0
+
+    try:
+        vat_percent = float(input("VAT % (0 if none): ") or 0)
+    except ValueError:
+        vat_percent = 0
+
+    vat_amount = (
+        (subtotal - discount)
+        * vat_percent / 100
+    )
+
+    grand_total = subtotal - discount + vat_amount
+
+    print("""
+====================================
+        PAYMENT METHOD
+====================================
+1. Cash
+2. Transfer
+3. Credit
+====================================
+""")
+
+    payment = input("Select payment: ").strip()
+
+    if payment not in ("1", "2", "3"):
+        print("❌ Invalid payment method.")
+        conn.close()
+        return False
+
+    print("\n====================================")
+    print(f"Subtotal    : ₦{subtotal:,.2f}")
+    print(f"Discount    : ₦{discount:,.2f}")
+    print(f"VAT         : ₦{vat_amount:,.2f}")
+    print(f"Grand Total : ₦{grand_total:,.2f}")
+    print("====================================")
+
+    confirm = input("\nComplete Sale? (Y/N): ").strip().upper()
+
+    if confirm != "Y":
+        conn.close()
+        print("\n❌ Sale cancelled.")
+        return False
+
+    staff = current_user()
+
+    if staff:
+        staff_name = staff["fullname"]
+    else:
+        staff_name = "Unknown"
+    # -----------------------------
+    # Save Sale Header
+    # -----------------------------
+    cur.execute("""
+    INSERT INTO sales
+    (
+        product_id,
+        quantity,
+        buying_price,
+        selling_price,
+        total_amount,
+        total_profit,
+        sale_date,
+        staff_name
+    )
+    VALUES (?,?,?,?,?,?,?,?)
+    """, (
+        cart[0]["product_id"],
+        sum(item["quantity"] for item in cart),
+        cart[0]["buying_price"],
+        cart[0]["selling_price"],
+        grand_total,
+        total_profit,
+        sale_date,
+        staff_name
+    ))
+
+    sale_id = cur.lastrowid
+
+    # -----------------------------
+    # Save Receipt Header
+    # -----------------------------
+    cur.execute("""
+    INSERT INTO receipts
+    (
+        receipt_no,
+        customer_name,
+        transaction_type,
+        amount,
+        charge,
+        total,
+        receipt_date
+    )
+    VALUES (?,?,?,?,?,?,?)
+    """, (
+        receipt_no,
+        "",
+        "Sale",
+        subtotal,
+        0,
+        grand_total,
+        sale_date
+    ))
+
+    # -----------------------------
+    # Save Individual Items
+    # -----------------------------
+    for item in cart:
+
+        line_total = (
+            item["selling_price"] *
+            item["quantity"]
+        )
+
+        line_profit = (
+            item["selling_price"] -
+            item["buying_price"]
+        ) * item["quantity"]
+
+        # Save into sale_items
+        cur.execute("""
+        INSERT INTO sale_items
+        (
+            sale_id,
+            product_id,
+            quantity,
+            buying_price,
+            selling_price,
+            profit,
+            subtotal
+        )
+        VALUES (?,?,?,?,?,?,?)
+        """, (
+            sale_id,
+            item["product_id"],
+            item["quantity"],
+            item["buying_price"],
+            item["selling_price"],
+            line_profit,
+            line_total
+        ))
+
+        # Save into receipt_items
+        cur.execute("""
+        INSERT INTO receipt_items
+        (
+            receipt_no,
+            product_id,
+            product_name,
+            quantity,
+            unit_price,
+            line_total
+        )
+        VALUES (?,?,?,?,?,?)
+        """, (
+            receipt_no,
+            item["product_id"],
+            item["product_name"],
+            item["quantity"],
+            item["selling_price"],
+            line_total
+        ))
+    # -----------------------------
+    # Update Stock
+    # -----------------------------
+    for item in cart:
+        cur.execute("""
+        UPDATE products
+        SET current_stock = current_stock - ?
+        WHERE id = ?
+        """, (
+            item["quantity"],
+            item["product_id"]
+        ))
+
+    conn.commit()
+    conn.close()
+
+    # -----------------------------
+    # Update Balances
+    # -----------------------------
+    if payment == "1":
+        update_cash_balance(grand_total)
+        payment_name = "Cash"
+
+    elif payment == "2":
+        update_wallet_balance(grand_total)
+        payment_name = "Transfer"
+
+    else:
+        payment_name = "Credit"
+
+    # -----------------------------
+    # Audit Log
+    # -----------------------------
+    log_action(
+        staff_name,
+        "Sale",
+        f"Receipt {receipt_no} - ₦{grand_total:,.2f}"
+    )
+
+    # -----------------------------
+    # Receipt
+    # -----------------------------
+    print("\n====================================")
+    print("          POS LEDGER NG")
+    print("====================================")
+    print(f"Receipt No : {receipt_no}")
+    print(f"Date       : {sale_date}")
+    print(f"Cashier    : {staff_name}")
+    print("------------------------------------")
+
+    for item in cart:
+        line_total = item["selling_price"] * item["quantity"]
+
+        print(
+            f"{item['product_name']}\n"
+            f"  {item['quantity']} x ₦{item['selling_price']:,.2f}"
+            f" = ₦{line_total:,.2f}"
+        )
+
+    print("------------------------------------")
+    print(f"Subtotal   : ₦{subtotal:,.2f}")
+    print(f"Discount   : ₦{discount:,.2f}")
+    print(f"VAT        : ₦{vat_amount:,.2f}")
+    print(f"TOTAL      : ₦{grand_total:,.2f}")
+    print(f"Profit     : ₦{total_profit:,.2f}")
+    print(f"Payment    : {payment_name}")
+    print("====================================")
+    print("Thank you for your patronage.")
+    print("====================================")
+
+    return True
