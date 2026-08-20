@@ -7,3 +7,7 @@ __pycache__/
 *.aab
 *.keystore
 *.jks
+build.log
+*.db
+*.sqlite
+*.sqlite3
