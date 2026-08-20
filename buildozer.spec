@@ -20,8 +20,6 @@ fullscreen = 0
 android.permissions = INTERNET
 
 android.api = 34
-android.sdk_path = /data/data/com.termux/files/home/Android/Sdk
-android.ndk_path = /data/data/com.termux/files/home/Android/Sdk/ndk/25.2.9519653
 android.minapi = 24
 android.ndk_api = 24
 android.archs = arm64-v8a
