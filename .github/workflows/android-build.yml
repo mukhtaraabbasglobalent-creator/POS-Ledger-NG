@@ -12,40 +12,26 @@ permissions:
 
 jobs:
   build-android:
-    name: Build POS Ledger NG APK
     runs-on: ubuntu-latest
 
     steps:
-      # --------------------------------------------------
-      # 1. Checkout
-      # --------------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # --------------------------------------------------
-      # 2. Python
-      # --------------------------------------------------
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # --------------------------------------------------
-      # 3. Java
-      # --------------------------------------------------
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      # --------------------------------------------------
-      # 4. Linux build dependencies
-      # --------------------------------------------------
       - name: Install system dependencies
         run: |
           sudo apt-get update
-
           sudo apt-get install -y \
             build-essential \
             git \
@@ -64,132 +50,104 @@ jobs:
             libssl-dev \
             gettext
 
-      # --------------------------------------------------
-      # 5. Android SDK
-      # --------------------------------------------------
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      # --------------------------------------------------
-      # 6. Android SDK packages
-      # --------------------------------------------------
       - name: Install Android SDK packages
         run: |
           sdkmanager "platform-tools"
           sdkmanager "platforms;android-34"
           sdkmanager "build-tools;34.0.0"
-
+          sdkmanager "cmdline-tools;latest"
           yes | sdkmanager --licenses || true
 
-      # --------------------------------------------------
-      # 7. Verify Android SDK
-      # --------------------------------------------------
-      - name: Verify Android environment
-        run: |
-          echo "========================================"
-          echo "SYSTEM"
-          echo "========================================"
-
-          uname -m
-          python --version
-          java -version
-
-          echo "========================================"
-          echo "ANDROID SDK"
-          echo "========================================"
-
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-
-          echo "========================================"
-          echo "SDK DIRECTORIES"
-          echo "========================================"
-
-          ls -lah "$ANDROID_HOME"
-          ls -lah "$ANDROID_HOME/platforms"
-          ls -lah "$ANDROID_HOME/build-tools"
-
-          echo "========================================"
-          echo "AIDL"
-          echo "========================================"
-
-          find "$ANDROID_HOME/build-tools" \
-            -type f \
-            -name aidl \
-            -print
-
-          echo "========================================"
-          echo "SDKMANAGER"
-          echo "========================================"
-
-          command -v sdkmanager || true
-          sdkmanager --version || true
-
-          echo "========================================"
-          echo "ADB"
-          echo "========================================"
-
-          command -v adb || true
-          adb version || true
-
-      # --------------------------------------------------
-      # 8. Python build tools
-      # --------------------------------------------------
-      - name: Install Python build tools
+      - name: Install Buildozer and Cython
         run: |
           python -m pip install --upgrade pip
+          python -m pip install buildozer
+          python -m pip install "cython==0.29.36"
 
-          python -m pip install \
-            buildozer \
-            "cython==0.29.36"
-
-      # --------------------------------------------------
-      # 9. Verify Buildozer
-      # --------------------------------------------------
-      - name: Verify Buildozer
+      - name: Prepare Buildozer Android SDK
         run: |
-          python --version
-          buildozer --version
-          cython --version
-
-      # --------------------------------------------------
-      # 10. Configure environment for python-for-android
-      # --------------------------------------------------
-      - name: Configure Android environment
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+          BUILD_SDK="$HOME/.buildozer/android/platform/android-sdk"
 
           echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_HOME"
+          echo "BUILD_SDK=$BUILD_SDK"
 
-      # --------------------------------------------------
-      # 11. Build APK
-      # --------------------------------------------------
+          rm -rf "$BUILD_SDK"
+          mkdir -p "$BUILD_SDK"
+
+          echo "Copying Android SDK..."
+
+          cp -a "$ANDROID_HOME/platform-tools" "$BUILD_SDK/"
+          cp -a "$ANDROID_HOME/build-tools" "$BUILD_SDK/"
+          cp -a "$ANDROID_HOME/platforms" "$BUILD_SDK/"
+          cp -a "$ANDROID_HOME/cmdline-tools" "$BUILD_SDK/"
+          cp -a "$ANDROID_HOME/licenses" "$BUILD_SDK/"
+
+          echo "Installing SDK manager compatibility path..."
+
+          mkdir -p "$BUILD_SDK/tools/bin"
+
+          ln -sf \
+            "$BUILD_SDK/cmdline-tools/latest/bin/sdkmanager" \
+            "$BUILD_SDK/tools/bin/sdkmanager"
+
+          echo "=== Buildozer SDK ==="
+          ls -lah "$BUILD_SDK"
+
+          echo "=== Build tools ==="
+          ls -lah "$BUILD_SDK/build-tools"
+
+          echo "=== AIDL ==="
+          find "$BUILD_SDK/build-tools" \
+            -name aidl \
+            -type f \
+            -print
+
+          echo "=== SDK manager ==="
+          "$BUILD_SDK/tools/bin/sdkmanager" --version || true
+
+      - name: Prepare Android NDK
+        run: |
+          echo "Available NDKs:"
+          ls -lah "$ANDROID_HOME/ndk" || true
+
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
+          echo "ANDROID_NDK_ROOT=$ANDROID_NDK_ROOT"
+
+      - name: Verify Android build environment
+        run: |
+          BUILD_SDK="$HOME/.buildozer/android/platform/android-sdk"
+
+          test -d "$BUILD_SDK/build-tools/34.0.0"
+          test -f "$BUILD_SDK/build-tools/34.0.0/aidl"
+          test -f "$BUILD_SDK/platforms/android-34/android.jar"
+
+          echo "AIDL:"
+          "$BUILD_SDK/build-tools/34.0.0/aidl" --version || true
+
+          echo "SDK:"
+          ls -lah "$BUILD_SDK"
+
+          echo "Platform:"
+          ls -lah "$BUILD_SDK/platforms/android-34"
+
+          echo "Build tools:"
+          ls -lah "$BUILD_SDK/build-tools/34.0.0"
+
       - name: Build debug APK
+        env:
+          ANDROID_HOME: /home/runner/.buildozer/android/platform/android-sdk
+          ANDROID_SDK_ROOT: /home/runner/.buildozer/android/platform/android-sdk
         run: |
           buildozer -v android debug
 
-      # --------------------------------------------------
-      # 12. Check generated APK
-      # --------------------------------------------------
-      - name: List generated APK
+      - name: List APK
         run: |
-          echo "========================================"
-          echo "APK OUTPUT"
-          echo "========================================"
-
+          echo "=== APK OUTPUT ==="
           ls -lah bin/
 
-          find bin \
-            -maxdepth 1 \
-            -type f \
-            -name "*.apk" \
-            -print
-
-      # --------------------------------------------------
-      # 13. Upload APK
-      # --------------------------------------------------
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
