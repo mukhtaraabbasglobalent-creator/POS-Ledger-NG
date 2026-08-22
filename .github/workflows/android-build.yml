@@ -90,20 +90,42 @@ jobs:
       - name: Configure Buildozer Android SDK
         run: |
           mkdir -p "$HOME/.buildozer/android/platform"
+
           rm -rf "$HOME/.buildozer/android/platform/android-sdk"
 
           ln -s "$ANDROID_HOME" \
             "$HOME/.buildozer/android/platform/android-sdk"
 
-          echo "Buildozer SDK:"
-          ls -lah "$HOME/.buildozer/android/platform/android-sdk"
+          echo "=== Android SDK ==="
+          echo "$ANDROID_HOME"
+          ls -lah "$ANDROID_HOME"
 
-          echo "Build tools:"
-          ls -lah "$HOME/.buildozer/android/platform/android-sdk/build-tools"
+          echo "=== SDK Manager ==="
+          which sdkmanager || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --version || true
 
-          echo "AIDL:"
-          find "$HOME/.buildozer/android/platform/android-sdk/build-tools" \
+          echo "=== AIDL ==="
+          find "$ANDROID_HOME/build-tools" \
             -name aidl -type f -print
+
+          echo "=== Build Tools ==="
+          ls -lah "$ANDROID_HOME/build-tools"
+
+          echo "=== Platform ==="
+          ls -lah "$ANDROID_HOME/platforms/android-34"
+
+      - name: Force modern Android SDK tools
+        run: |
+          export ANDROID_HOME="$ANDROID_HOME"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+
+          mkdir -p "$HOME/.buildozer/android/platform/android-sdk"
+
+          rm -rf "$HOME/.buildozer/android/platform/android-sdk/tools"
+
+          echo "Legacy Buildozer tools directory removed."
+
+          ls -lah "$HOME/.buildozer/android/platform/android-sdk"
 
       - name: Build debug APK
         run: |
