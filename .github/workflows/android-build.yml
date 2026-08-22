@@ -87,6 +87,24 @@ jobs:
           sdkmanager --list_installed | grep -E \
             'platform-tools|platforms;android-34|build-tools;34.0.0' || true
 
+      - name: Configure Buildozer Android SDK
+        run: |
+          mkdir -p "$HOME/.buildozer/android/platform"
+          rm -rf "$HOME/.buildozer/android/platform/android-sdk"
+
+          ln -s "$ANDROID_HOME" \
+            "$HOME/.buildozer/android/platform/android-sdk"
+
+          echo "Buildozer SDK:"
+          ls -lah "$HOME/.buildozer/android/platform/android-sdk"
+
+          echo "Build tools:"
+          ls -lah "$HOME/.buildozer/android/platform/android-sdk/build-tools"
+
+          echo "AIDL:"
+          find "$HOME/.buildozer/android/platform/android-sdk/build-tools" \
+            -name aidl -type f -print
+
       - name: Build debug APK
         run: |
           buildozer -v android debug
