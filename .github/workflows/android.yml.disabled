@@ -1,17 +1,17 @@
-name: POS Ledger NG Android APK
+name: Build POS Ledger NG Android
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-      - android-build
 
 permissions:
   contents: read
 
 jobs:
   build-android:
+    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -33,7 +33,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential \
             git \
             zip \
             unzip \
@@ -50,50 +49,21 @@ jobs:
             libssl-dev \
             gettext
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK packages
-        run: |
-          sdkmanager "platform-tools"
-          sdkmanager "platforms;android-34"
-          sdkmanager "build-tools;34.0.0"
-          yes | sdkmanager --licenses || true
-
-      - name: Install Python build tools
+      - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip
           python -m pip install buildozer
-          python -m pip install "cython==0.29.36"
 
       - name: Show build environment
         run: |
-          echo "Architecture:"
-          uname -m
-
-          echo "Python:"
           python --version
-
-          echo "Buildozer:"
           buildozer --version
-
-          echo "Java:"
           java -version
-
-          echo "Android SDK:"
-          echo "$ANDROID_HOME"
-
-          echo "Android SDK packages:"
-          sdkmanager --list_installed | grep -E \
-            'platform-tools|platforms;android-34|build-tools;34.0.0' || true
+          uname -m
 
       - name: Build debug APK
         run: |
-          buildozer -v android debug
-
-      - name: List APK
-        run: |
-          ls -lah bin/
+          buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
