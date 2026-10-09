@@ -1,23 +1,23 @@
 [app]
-android.skip_update = 1
 
 title = POS Ledger NG
 package.name = posledgerng
 package.domain = com.mukhtaraliyu
 
-source.dir = .
+source.dir = android_app
 source.include_exts = py,png,jpg,jpeg,kv,json,db
 source.exclude_exts = spec
 source.exclude_dirs = tests,.git,__pycache__,.buildozer
 
 version = 1.0
 
-requirements = python3,kivy,openpyxl
+requirements = python3,kivy
 
 orientation = portrait
 fullscreen = 0
 
 android.permissions = INTERNET
+android.allow_cleartext = True
 
 android.api = 34
 android.minapi = 24
