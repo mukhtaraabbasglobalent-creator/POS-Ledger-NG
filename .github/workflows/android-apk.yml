@@ -1,3 +1,6 @@
+cd ~/POS-Ledger-NG-cloudbuild
+
+cat > .github/workflows/android-apk.yml <<'EOF'
 name: POS Ledger NG Android APK
 
 on:
@@ -45,7 +48,10 @@ jobs:
           python -m pip install "buildozer==1.5.0" "Cython==0.29.34"
 
       - name: Build Android APK
-        run: buildozer -v android debug
+        env:
+          BUILDOZER_WARN_ON_ROOT: "0"
+        run: |
+          yes | buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -54,3 +60,4 @@ jobs:
           path: bin/*.apk
           if-no-files-found: error
           retention-days: 7
+EOF
