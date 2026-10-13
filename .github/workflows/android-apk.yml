@@ -1,9 +1,6 @@
-cd ~/POS-Ledger-NG-cloudbuild
-
-cat > .github/workflows/android-apk.yml <<'EOF'
 name: POS Ledger NG Android APK
 
-on:
+"on":
   push:
     branches:
       - cloud-apk-dashboard
@@ -32,6 +29,12 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+
       - name: Install Android build dependencies
         run: |
           sudo apt-get update
@@ -48,10 +51,7 @@ jobs:
           python -m pip install "buildozer==1.5.0" "Cython==0.29.34"
 
       - name: Build Android APK
-        env:
-          BUILDOZER_WARN_ON_ROOT: "0"
-        run: |
-          yes | buildozer -v android debug
+        run: buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -60,4 +60,3 @@ jobs:
           path: bin/*.apk
           if-no-files-found: error
           retention-days: 7
-EOF
