@@ -11,7 +11,7 @@ source.exclude_dirs = tests,.git,__pycache__,.buildozer
 
 version = 1.0
 
-requirements = python3,kivy
+requirements = python3,kivy,charset-normalizer==2.1.1
 
 orientation = portrait
 fullscreen = 0
